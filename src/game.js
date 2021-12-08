@@ -7,6 +7,7 @@ let snakeBody = [];
 let applePos = [];
 const gridSize = 20;
 let score = 0;
+let start;
 
 function setup() {
     const width = Math.floor(fieldSize[0] - (fieldSize[0] % gridSize));
@@ -17,11 +18,13 @@ function setup() {
 }
 
 function initNewGame() {
+    start = false;
     snakeBody = [[Math.floor(width / 2), Math.floor(height / 2)]];
     setNewApple();
 }
 
 function keyPressed() {
+    start = true;
     if (keyCode === UP_ARROW) {
         direction = "up";
     } else if (keyCode === DOWN_ARROW) {
@@ -70,28 +73,30 @@ function setNewApple() {
 }
 
 function moveSnake() {
-    // pushing snake forward: add new first element regarding direction
-    const currentFirstCoord = snakeBody[0];
-    if (direction === "up") {
-        snakeBody.unshift([currentFirstCoord[0], currentFirstCoord[1] - gridSize]);
-    } else if (direction === "down") {
-        snakeBody.unshift([currentFirstCoord[0], currentFirstCoord[1] + gridSize]);
-    } else if (direction === "left") {
-        snakeBody.unshift([currentFirstCoord[0] - gridSize, currentFirstCoord[1]]);
-    } else {
-        snakeBody.unshift([currentFirstCoord[0] + gridSize, currentFirstCoord[1]]);
-    }
+    if (start) {
+        // pushing snake forward: add new first element regarding direction
+        const currentFirstCoord = snakeBody[0];
+        if (direction === "up") {
+            snakeBody.unshift([currentFirstCoord[0], currentFirstCoord[1] - gridSize]);
+        } else if (direction === "down") {
+            snakeBody.unshift([currentFirstCoord[0], currentFirstCoord[1] + gridSize]);
+        } else if (direction === "left") {
+            snakeBody.unshift([currentFirstCoord[0] - gridSize, currentFirstCoord[1]]);
+        } else {
+            snakeBody.unshift([currentFirstCoord[0] + gridSize, currentFirstCoord[1]]);
+        }
 
-    // Check if snake eats apple with new pos
-    const isEaten = collidingWithSnake([applePos], [snakeBody[0]]);
-    if (isEaten) {
-        setNewApple();
-        score++;
-    } else if (checkGameOver()) {
-        alert("Gameover.. Score: " + score);
-        initNewGame();
-    } else {
-        snakeBody.pop();
+        // Check if snake eats apple with new pos
+        const isEaten = collidingWithSnake([applePos], [snakeBody[0]]);
+        if (isEaten) {
+            setNewApple();
+            score++;
+        } else if (checkGameOver()) {
+            alert("Gameover.. Score: " + score);
+            initNewGame();
+        } else {
+            snakeBody.pop();
+        }
     }
 }
 
@@ -116,7 +121,3 @@ function checkGameOver() {
     // snake is colliding with itself
     return snakeBody.length > 2 && collidingWithSnake([snakeBody[0]], snakeBody.slice(1));
 }
-
-
-
-
