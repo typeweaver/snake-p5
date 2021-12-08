@@ -1,11 +1,73 @@
-let direction = "up";
 const frames = 60;
-let gameTick = 0;
-let difficulty = 10;
 const fieldSize = [400, 400];
+let gameTick = 0;
+let difficulty = 10; // lower is harder
+let direction = "up";
 let snakeBody = [];
 let applePos = [];
 const gridSize = 20;
+let score = 0;
+
+function setup() {
+    const width = Math.floor(fieldSize[0] - (fieldSize[0] % gridSize));
+    const height = Math.floor(fieldSize[1] - (fieldSize[1] % gridSize));
+    createCanvas(width, height);
+    initNewGame();
+    frameRate(frames);
+}
+
+function initNewGame() {
+    snakeBody = [[Math.floor(width / 2), Math.floor(height / 2)]];
+    setNewApple();
+}
+
+function keyPressed() {
+    if (keyCode === UP_ARROW) {
+        direction = "up";
+    } else if (keyCode === DOWN_ARROW) {
+        direction = "down";
+    } else if (keyCode === LEFT_ARROW) {
+        direction = "left";
+    } else if (keyCode === RIGHT_ARROW) {
+        direction = "right";
+    } else if (keyCode === 27) {
+        alert("Pause");
+    }
+}
+
+function draw() {
+    if (gameTick % difficulty === 0) {
+        moveSnake();
+        drawSnake();
+        drawApple();
+    }
+    gameTick++;
+}
+
+function drawApple() {
+    fill("Red");
+    square(applePos[0], applePos[1], gridSize);
+}
+
+function drawSnake() {
+    background("Black");
+    fill("LimeGreen");
+    for (const bodyPart of snakeBody) {
+        square(bodyPart[0], bodyPart[1], gridSize);
+    }
+}
+
+function setNewApple() {
+    let validPos = false;
+    let newApplePos;
+    do {
+        const xCoord = Math.floor(Math.random() * fieldSize[0]);
+        const yCoord = Math.floor(Math.random() * fieldSize[1]);
+        newApplePos = [xCoord - (xCoord % gridSize), yCoord - (yCoord % gridSize)];
+        validPos = !collidingWithSnake([newApplePos], snakeBody);
+    } while (!validPos)
+    applePos = newApplePos;
+}
 
 function moveSnake() {
     // pushing snake forward: add new first element regarding direction
@@ -21,75 +83,40 @@ function moveSnake() {
     }
 
     // Check if snake eats apple with new pos
-    const isEaten = matchPosAppleSnake(applePos, [snakeBody[0]]);
+    const isEaten = collidingWithSnake([applePos], [snakeBody[0]]);
     if (isEaten) {
         setNewApple();
+        score++;
+    } else if (checkGameOver()) {
+        alert("Gameover.. Score: " + score);
+        initNewGame();
     } else {
         snakeBody.pop();
     }
 }
 
-function drawSnake() {
-    background("Black");
-    fill("LimeGreen");
-    for (const bodyPart of snakeBody) {
-        square(bodyPart[0], bodyPart[1], gridSize);
+function collidingWithSnake(positionsToBeChecked, snakeBody) {
+    for (const positionToBeChecked of positionsToBeChecked) {
+        const colliding = snakeBody.find(function (bodyPart) {
+            return bodyPart[0] === positionToBeChecked[0] && bodyPart[1] === positionToBeChecked[1];
+        });
+        if (colliding) return true;
     }
+    return false;
 }
 
-function drawApple() {
-    fill("Red");
-    square(applePos[0], applePos[1], gridSize);
+function collidingWithBorders() {
+    const posToBeChecked = snakeBody[0];
+    return posToBeChecked[0] < 0 || posToBeChecked[1] < 0 || posToBeChecked[0] >= fieldSize[0] || posToBeChecked[1] >= fieldSize[1];
 }
 
-function setNewApple() {
-    let validPos = false;
-    let newApplePos;
-    do {
-        const xCoord = Math.floor(Math.random() * fieldSize[0]);
-        const yCoord = Math.floor(Math.random() * fieldSize[1]);
-        newApplePos = [xCoord - (xCoord % gridSize), yCoord - (yCoord % gridSize)];
-        validPos = !matchPosAppleSnake(newApplePos, snakeBody);
-    } while (!validPos)
-    applePos = newApplePos;
+function checkGameOver() {
+    // snake is passing borders
+    if (collidingWithBorders()) return true;
+    // snake is colliding with itself
+    return snakeBody.length > 2 && collidingWithSnake([snakeBody[0]], snakeBody.slice(1));
 }
 
-function matchPosAppleSnake(applePos, snakeBody) {
-    const match = snakeBody.find(function (bodyPart) {
-        return bodyPart[0] === applePos[0] && bodyPart[1] === applePos[1];
-    });
-    return Boolean(match);
-}
 
-function setup() {
-    const width = Math.floor(fieldSize[0] - (fieldSize[0] % gridSize));
-    const height = Math.floor(fieldSize[1] - (fieldSize[1] % gridSize));
-    createCanvas(width, height);
 
-    snakeBody = [[Math.floor(width / 2), Math.floor(height / 2)]];
 
-    setNewApple();
-
-    frameRate(frames);
-}
-
-function draw() {
-    if (gameTick % difficulty === 0) {
-        moveSnake();
-        drawSnake();
-        drawApple();
-    }
-    gameTick++;
-}
-
-function keyPressed() {
-    if (keyCode === UP_ARROW) {
-        direction = "up";
-    } else if (keyCode === DOWN_ARROW) {
-        direction = "down";
-    } else if (keyCode === LEFT_ARROW) {
-        direction = "left";
-    } else if (keyCode === RIGHT_ARROW) {
-        direction = "right";
-    }
-}
